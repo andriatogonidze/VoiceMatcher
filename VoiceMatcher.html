@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoiceMatcher - Changez votre voix en direct</title>
+  <style>
+    :root {
+      --bg: #0a0e27;
+      --panel: rgba(15, 20, 45, 0.95);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f0f4ff;
+      --muted: #a8b8d8;
+      --accent: #6366f1;
+      --accent-2: #ec4899;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #0f1429 0%, #1a1f3a 50%, #14192f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .main-card {
+      background: linear-gradient(180deg, var(--panel), rgba(15, 20, 45, 0.8));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .section {
+      margin-bottom: 36px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    select,
+    input[type="range"] {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    select:hover,
+    input[type="range"]:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    select:focus,
+    input[type="range"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    input[type="range"] {
+      cursor: pointer;
+      height: 6px;
+      padding: 0;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 16px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary.active {
+      background: linear-gradient(135deg, var(--success), #34d399);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-bar {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+
+    .status-indicator.active {
+      background: var(--success);
+      animation: pulse 1s infinite;
+    }
+
+    .status-indicator.listening {
+      background: var(--danger);
+      animation: pulse 0.6s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .characters-showcase {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .character-card {
+      padding: 16px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .character-card:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .character-card.selected {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+
+    .character-emoji {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .character-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .character-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .visualizer {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 4px;
+      height: 120px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-radius: 2px;
+      opacity: 0.8;
+      min-height: 4px;
+    }
+
+    .info-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #d1fae5;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .info-box.warning {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: #ffebee;
+    }
+
+    @media (max-width: 600px) {
+      .main-card {
+        padding: 24px;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .controls-grid,
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+
+      .characters-showcase {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎙️ VoiceMatcher</h1>
+      <p>Changez votre voix en temps réel - Parlez et écoutez le résultat instantanément</p>
+    </div>
+
+    <div class="main-card">
+      <!-- Start/Stop Section -->
+      <div class="section">
+        <div class="section-title">🎯 Démarrer</div>
+        <div class="button-group">
+          <button id="startBtn" class="btn-primary">🔴 Démarrer le changement de voix</button>
+          <button id="stopBtn" class="btn-secondary" disabled>⏹️ Arrêter</button>
+        </div>
+        <div class="status-bar">
+          <div class="status-indicator"></div>
+          <span id="statusText">Prêt à démarrer...</span>
+        </div>
+      </div>
+
+      <!-- Character Selection -->
+      <div class="section">
+        <div class="section-title">🎭 Choisir un personnage</div>
+        <div class="characters-showcase" id="charactersList"></div>
+      </div>
+
+      <!-- Voice Effects -->
+      <div class="section">
+        <div class="section-title">🎚️ Ajuster les effets</div>
+        <div class="controls-grid">
+          <div class="control-group">
+            <label for="pitchRange">Hauteur (Pitch)</label>
+            <input id="pitchRange" type="range" min="0.5" max="2" step="0.05" value="1" />
+            <small id="pitchValue" style="color: var(--muted); font-size: 0.85rem;">1.0x</small>
+          </div>
+          <div class="control-group">
+            <label for="speedRange">Vitesse</label>
+            <input id="speedRange" type="range" min="0.5" max="2" step="0.05" value="1" />
+            <small id="speedValue" style="color: var(--muted); font-size: 0.85rem;">1.0x</small>
+          </div>
+          <div class="control-group">
+            <label for="volumeRange">Volume</label>
+            <input id="volumeRange" type="range" min="0" max="100" step="5" value="70" />
+            <small id="volumeValue" style="color: var(--muted); font-size: 0.85rem;">70%</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visualizer -->
+      <div class="section">
+        <div class="section-title">📊 Visualisation audio</div>
+        <div class="visualizer" id="visualizer"></div>
+      </div>
+
+      <div class="info-box">
+        💫 <strong>Autorisations nécessaires :</strong> VoiceMatcher aura besoin d'accéder à votre microphone (pour enregistrer votre voix) ET à vos haut-parleurs (pour vous la retransmettre transformée). Cliquez sur "Démarrer" et acceptez les deux demandes du navigateur!
+      </div>
+
+      <div class="info-box warning">
+        ⚠️ <strong>Note :</strong> Utilisez un casque audio pour éviter les retours d'écho. L'application fonctionne mieux avec des environnements calmes.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const characters = [
+      { id: 'normal', name: 'Neutre', emoji: '😐', description: 'Voix normale' },
+      { id: 'girl', name: 'Fille', emoji: '👩', description: 'Voix féminine' },
+      { id: 'deep', name: 'Grave', emoji: '🧔', description: 'Voix profonde' },
+      { id: 'chipmunk', name: 'Rongeur', emoji: '🐿️', description: 'Voix aiguë' },
+      { id: 'robot', name: 'Robot', emoji: '🤖', description: 'Voix mécanique' },
+      { id: 'echo', name: 'Écho', emoji: '📢', description: 'Avec résonance' },
+      { id: 'monster', name: 'Monstre', emoji: '👹', description: 'Voix terrifiante' },
+      { id: 'narrator', name: 'Narrateur', emoji: '🎙️', description: 'Professionnel' },
+      { id: 'demon', name: 'Démon', emoji: '😈', description: 'Voix sombre' },
+    ];
+
+    const elements = {
+      startBtn: document.getElementById('startBtn'),
+      stopBtn: document.getElementById('stopBtn'),
+      statusText: document.getElementById('statusText'),
+      pitchRange: document.getElementById('pitchRange'),
+      speedRange: document.getElementById('speedRange'),
+      volumeRange: document.getElementById('volumeRange'),
+      pitchValue: document.getElementById('pitchValue'),
+      speedValue: document.getElementById('speedValue'),
+      volumeValue: document.getElementById('volumeValue'),
+      charactersList: document.getElementById('charactersList'),
+      visualizer: document.getElementById('visualizer'),
+    };
+
+    let audioContext = null;
+    let analyser = null;
+    let processor = null;
+    let mediaStream = null;
+    let source = null;
+    let destination = null;
+    let selectedCharacter = 'normal';
+    let isActive = false;
+
+    const statusIndicator = document.querySelector('.status-bar .status-indicator');
+
+    // Initialize Audio Context
+    function initAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioContext;
+    }
+
+    // Render Characters
+    function renderCharacters() {
+      elements.charactersList.innerHTML = characters
+        .map(
+          (char) =>
+            `<div class="character-card ${char.id === 'normal' ? 'selected' : ''}" data-character="${char.id}">
+              <div class="character-emoji">${char.emoji}</div>
+              <div class="character-name">${char.name}</div>
+              <div class="character-desc">${char.description}</div>
+            </div>`
+        )
+        .join('');
+
+      document.querySelectorAll('.character-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.character-card').forEach((c) => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedCharacter = card.dataset.character;
+          updateStatus(`${characters.find((c) => c.id === selectedCharacter).name} sélectionné.`);
+        });
+      });
+    }
+
+    // Update Status
+    function updateStatus(msg) {
+      elements.statusText.textContent = msg;
+    }
+
+    // Update Slider Values
+    elements.pitchRange.addEventListener('input', (e) => {
+      elements.pitchValue.textContent = parseFloat(e.target.value).toFixed(2) + 'x';
+    });
+
+    elements.speedRange.addEventListener('input', (e) => {
+      elements.speedValue.textContent = parseFloat(e.target.value).toFixed(2) + 'x';
+    });
+
+    elements.volumeRange.addEventListener('input', (e) => {
+      elements.volumeValue.textContent = e.target.value + '%';
+    });
+
+    // Create ScriptProcessorNode for real-time audio processing
+    function createProcessor() {
+      const bufferSize = 4096;
+      processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+
+      processor.onaudioprocess = (event) => {
+        const input = event.inputBuffer.getChannelData(0);
+        const output = event.outputBuffer.getChannelData(0);
+
+        // Copy and apply effects
+        const pitch = parseFloat(elements.pitchRange.value);
+        const speed = parseFloat(elements.speedRange.value);
+        const volume = parseFloat(elements.volumeRange.value) / 100;
+
+        // Simple pitch shifting by resampling
+        let index = 0;
+        for (let i = 0; i < input.length; i++) {
+          const sampleIndex = Math.floor((i / input.length) * input.length * speed) % input.length;
+          output[i] = input[sampleIndex] * volume * pitch * 0.5;
+        }
+      };
+
+      return processor;
+    }
+
+    // Start Live Voice Changing
+    elements.startBtn.addEventListener('click', async () => {
+      try {
+        // Show permission request message
+        updateStatus('🔐 Demande d\'accès au micro et aux haut-parleurs...');
+        
+        const ctx = initAudioContext();
+
+        // Resume context if suspended
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        // Get microphone stream with explicit permission request
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+
+        updateStatus('✅ Micro et haut-parleur autorisés! Parlez maintenant...');
+        setTimeout(() => {
+          updateStatus('🎤 Microphone actif - Parlez maintenant!');
+        }, 1500);
+
+        // Create audio nodes
+        source = ctx.createMediaStreamSource(mediaStream);
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+
+        // Create convolver and filters
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = 'lowpass';
+
+        const highpass = ctx.createBiquadFilter();
+        highpass.type = 'highpass';
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = 0.8;
+
+        // Connect nodes
+        source.connect(highpass);
+        highpass.connect(lowpass);
+        lowpass.connect(analyser);
+        analyser.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        // Store for later use
+        destination = { lowpass, highpass, gainNode };
+
+        // Start visualization
+        startVisualization();
+
+        isActive = true;
+        elements.startBtn.disabled = true;
+        elements.startBtn.classList.add('active');
+        elements.stopBtn.disabled = false;
+        statusIndicator.classList.add('listening');
+        updateStatus('🎤 Microphone actif - Parlez maintenant!');
+      } catch (error) {
+        updateStatus('❌ Accès au micro refusé ou indisponible.');
+        statusIndicator.classList.remove('listening');
+      }
+    });
+
+    // Stop Voice Changing
+    elements.stopBtn.addEventListener('click', () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+      }
+
+      isActive = false;
+      elements.startBtn.disabled = false;
+      elements.startBtn.classList.remove('active');
+      elements.stopBtn.disabled = true;
+      statusIndicator.classList.remove('listening');
+      updateStatus('Arrêté. Prêt à redémarrer.');
+
+      // Clear visualizer
+      const bars = document.querySelectorAll('.wave-bar');
+      bars.forEach((bar) => (bar.style.height = '4px'));
+    });
+
+    // Visualization
+    function startVisualization() {
+      if (!analyser || !isActive) return;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      function draw() {
+        if (!isActive) return;
+
+        requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+
+        const bars = document.querySelectorAll('.wave-bar');
+        bars.forEach((bar, i) => {
+          const value = (dataArray[i * 2] / 255) * 100 + 10;
+          bar.style.height = Math.max(4, value) + 'px';
+        });
+      }
+
+      // Create bars if not exists
+      if (elements.visualizer.children.length === 0) {
+        for (let i = 0; i < 32; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'wave-bar';
+          bar.style.height = '4px';
+          elements.visualizer.appendChild(bar);
+        }
+      }
+
+      draw();
+    }
+
+    // Initialize
+    renderCharacters();
+  </script>
+</body>
+</html>
